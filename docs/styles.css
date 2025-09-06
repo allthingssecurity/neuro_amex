@@ -1,0 +1,71 @@
+:root {
+  --bg: #0b0f14;
+  --panel: #121821;
+  --text: #dbe3ee;
+  --muted: #9fb0c8;
+  --accent: #58a6ff;
+  --ok: #32d296;
+  --warn: #f39c12;
+  --bad: #ff6b6b;
+  --code: #0a0d12;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  background: linear-gradient(180deg, #0b0f14, #0f1520);
+  color: var(--text);
+  font: 15px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+}
+header, footer { max-width: 1000px; margin: 24px auto; padding: 0 16px; }
+header h1 { margin: 0 0 4px; font-size: 24px; }
+header p { margin: 0; color: var(--muted); }
+
+main { max-width: 1000px; margin: 0 auto 48px; padding: 0 16px; }
+.panel {
+  background: var(--panel);
+  border: 1px solid #1b2533;
+  border-radius: 10px;
+  padding: 16px;
+  margin: 16px 0;
+}
+.panel h2 { margin: 0 0 8px; font-size: 18px; }
+.panel h3 { margin: 12px 0 6px; font-size: 16px; }
+.panel h4 { margin: 12px 0 6px; font-size: 14px; color: var(--muted); }
+.row { display: flex; gap: 12px; align-items: center; margin: 8px 0; }
+label { min-width: 160px; color: var(--muted); }
+select, textarea, button {
+  background: #0e141d;
+  color: var(--text);
+  border: 1px solid #1b2533;
+  border-radius: 8px;
+}
+select { padding: 8px 10px; }
+textarea { width: 100%; padding: 12px; }
+button { padding: 8px 12px; cursor: pointer; }
+.actions { margin-top: 10px; }
+button:hover { border-color: var(--accent); }
+button:active { transform: translateY(1px); }
+
+.code {
+  background: var(--code);
+  color: #cfe3ff;
+  border: 1px solid #1b2533;
+  border-radius: 8px;
+  padding: 10px;
+  overflow-x: auto;
+}
+
+.grid { display: grid; grid-template-columns: 1fr 2fr; gap: 16px; }
+.badge { display: inline-block; padding: 8px 12px; border-radius: 999px; background: #0e141d; border: 1px solid #1b2533; }
+.badge.ok { color: var(--ok); border-color: var(--ok); }
+.badge.bad { color: var(--bad); border-color: var(--bad); }
+.badge.warn { color: var(--warn); border-color: var(--warn); }
+.text { white-space: pre-wrap; }
+.hint { color: var(--muted); margin-top: 0; }
+
+details > summary { cursor: pointer; color: var(--muted); }
+details[open] summary { color: var(--text); }
+
+footer { color: var(--muted); font-size: 13px; }
+

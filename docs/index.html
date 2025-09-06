@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Neuro-Symbolic Demo (Amex)</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header>
+      <h1>Neuro-Symbolic Chatbots for Financial Services</h1>
+      <p>Encoding Amex policies as constraints, with LLM fact extraction.</p>
+    </header>
+
+    <main>
+      <section class="panel">
+        <h2>1) Choose Use Case & Example</h2>
+        <div class="row">
+          <label for="flow">Use Case</label>
+          <select id="flow">
+            <option value="auth">Transaction Authorization</option>
+            <option value="dispute">Dispute Filing</option>
+            <option value="cli">Credit Line Increase</option>
+          </select>
+        </div>
+        <div class="row">
+          <label for="example">Example</label>
+          <select id="example"></select>
+        </div>
+        <textarea id="inputText" rows="8" spellcheck="false"></textarea>
+        <div class="actions">
+          <button id="loadExample">Load Example</button>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>2) LLM Extraction (Mock)</h2>
+        <p class="hint">This simulates an LLM converting chat text into structured facts.</p>
+        <div class="actions">
+          <button id="runLLM">Run LLM Extraction</button>
+        </div>
+        <pre id="factsOut" class="code"></pre>
+      </section>
+
+      <section class="panel">
+        <h2>3) Policy Verification (Constraint Solver)</h2>
+        <p class="hint">This step mirrors Z3 rules in JavaScript for a fully static demo.</p>
+        <div class="actions">
+          <button id="runVerifier">Run Verifier</button>
+        </div>
+        <div id="verifierResults" class="grid">
+          <div>
+            <h3>Decision</h3>
+            <div id="decisionBox" class="badge">—</div>
+          </div>
+          <div>
+            <h3>Explanation</h3>
+            <div id="explanationBox" class="text"></div>
+          </div>
+        </div>
+        <details>
+          <summary>Proof Details</summary>
+          <div class="grid">
+            <div>
+              <h4>Checked Invariants</h4>
+              <pre id="invariantsOut" class="code"></pre>
+            </div>
+            <div>
+              <h4>Unsat Core</h4>
+              <pre id="unsatOut" class="code"></pre>
+            </div>
+          </div>
+        </details>
+      </section>
+    </main>
+
+    <footer>
+      <p>
+        Demo only. The production system uses Z3 and a real LLM; this page mirrors the logic in-browser so it can run on GitHub Pages.
+      </p>
+    </footer>
+
+    <script src="examples.js"></script>
+    <script src="verifiers.js"></script>
+    <script src="app.js"></script>
+  </body>
+  </html>
+

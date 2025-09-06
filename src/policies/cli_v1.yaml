@@ -1,0 +1,15 @@
+id: cli_v1
+entities:
+  Reals: [verified_income, utilization_3m, dti]
+  Ints: [time_on_book_m]
+  Bools: [delinquent]
+invariants:
+  - name: no_delinq
+    assert: "Not(delinquent)"
+  - name: min_tenure
+    assert: "time_on_book_m >= 6"
+  - name: dti_cap
+    assert: "dti <= 0.45"
+actions: []
+one_hot_actions: false
+

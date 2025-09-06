@@ -1,0 +1,154 @@
+/* global DEMO_EXAMPLES, DEMO_VERIFIERS */
+
+const flowEl = document.getElementById('flow');
+const exEl = document.getElementById('example');
+const inputEl = document.getElementById('inputText');
+const factsOut = document.getElementById('factsOut');
+const decisionBox = document.getElementById('decisionBox');
+const explanationBox = document.getElementById('explanationBox');
+const invariantsOut = document.getElementById('invariantsOut');
+const unsatOut = document.getElementById('unsatOut');
+
+function setExamples(flow) {
+  exEl.innerHTML = '';
+  (DEMO_EXAMPLES[flow] || []).forEach(ex => {
+    const opt = document.createElement('option');
+    opt.value = ex.id; opt.textContent = ex.label; exEl.appendChild(opt);
+  });
+}
+
+function getExample(flow, id) {
+  return (DEMO_EXAMPLES[flow] || []).find(x => x.id === id) || null;
+}
+
+function pretty(obj) {
+  try { return JSON.stringify(obj, null, 2); } catch { return String(obj); }
+}
+
+function parseMoney(text) {
+  const m = text.match(/\$\s*(\d+[\d,]*(?:\.\d+)?)/i);
+  return m ? parseFloat(m[1].replace(/,/g, '')) : null;
+}
+
+function extractAuthFacts(text) {
+  const t = text.toLowerCase();
+  const amount = parseMoney(text);
+  const riskMatch = t.match(/risk\s*(?:score)?\s*(?:is|=)?\s*(\d+(?:\.\d+)?)/);
+  const risk = riskMatch ? parseFloat(riskMatch[1]) : null;
+  const availMatch = t.match(/available\s*(?:balance)?\s*(?:shows|is|=)?\s*\$?(\d+[\d,]*(?:\.\d+)?)/);
+  const avail = availMatch ? parseFloat(availMatch[1].replace(/,/g, '')) : null;
+  const limitMatch = t.match(/limit\s*(?:is|=)?\s*\$?(\d+[\d,]*(?:\.\d+)?)/);
+  const limit = limitMatch ? parseFloat(limitMatch[1].replace(/,/g, '')) : null;
+  const mccMatch = t.match(/mcc\s*(\d{4})/);
+  const mcc = mccMatch ? parseInt(mccMatch[1], 10) : 5999;
+  const cnp = t.includes('card not present') || t.includes('online') || t.includes('not card present');
+  const velMatch = t.match(/velocity.*?(\d+)/) || t.match(/last\s+hour.*?(\d+)/) || t.match(/(\d+)\s+txn/);
+  const vel1h = velMatch ? parseInt(velMatch[1], 10) : 1;
+  return { amount, avail, limit, risk, mcc, cnp, vel1h };
+}
+
+function daysBetween(iso1, iso2) {
+  try {
+    const d1 = new Date(iso1); const d2 = new Date(iso2);
+    return Math.round((d2 - d1) / (1000*60*60*24));
+  } catch { return null; }
+}
+
+function extractDisputeFacts(text) {
+  const t = text.toLowerCase();
+  const duplicate_charge = t.includes('billed twice') || t.includes('duplicate');
+  // crude date parsing for demo
+  const monthMap = { jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11 };
+  function findDate(s) {
+    const m = s.match(/(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\w*\s*(\d{1,2})/i);
+    if (!m) return null;
+    const now = new Date();
+    return new Date(now.getFullYear(), monthMap[m[1].slice(0,3).toLowerCase()], parseInt(m[2],10));
+  }
+  const txnD = findDate(text) || new Date();
+  const claimD = new Date();
+  const days_since_txn = daysBetween(txnD.toISOString(), claimD.toISOString());
+  return { duplicate_charge, txn_date: txnD.toISOString().slice(0,10), claim_date: claimD.toISOString().slice(0,10), days_since_txn };
+}
+
+function extractCLIFacts(text) {
+  const t = text.toLowerCase();
+  const amount_requested = parseMoney(text);
+  const incomeMatch = t.match(/income\s*(?:is|=)?\s*\$?(\d+[\d,]*(?:\.\d+)?)/);
+  const income = incomeMatch ? parseFloat(incomeMatch[1].replace(/,/g, '')) : null;
+  const limitMatch = t.match(/current\s+limit\s*(?:is|=)?\s*\$?(\d+[\d,]*(?:\.\d+)?)/);
+  const current_limit = limitMatch ? parseFloat(limitMatch[1].replace(/,/g, '')) : 5000;
+  const tenureMatch = t.match(/(\d+)\s*(?:months|month|m)|(?:year|years)\b/);
+  let tenure_months = 12;
+  if (tenureMatch) {
+    if (tenureMatch[1]) tenure_months = parseInt(tenureMatch[1], 10);
+    if (t.includes('year')) tenure_months = Math.max(tenure_months, 12);
+  }
+  const delinquent = t.includes('missed') || t.includes('late payment');
+  return { amount_requested, current_limit, income, tenure_months, delinquent };
+}
+
+function extractFacts(flow, text) {
+  if (flow === 'auth') return extractAuthFacts(text);
+  if (flow === 'dispute') return extractDisputeFacts(text);
+  if (flow === 'cli') return extractCLIFacts(text);
+  return {};
+}
+
+function runVerifier(flow, facts) {
+  if (flow === 'auth') {
+    const proof = DEMO_VERIFIERS.verifyAuth(facts);
+    const decision = proof.satisfiable ? (proof.chosen_action || 'decline') : 'decline';
+    const explanation = DEMO_VERIFIERS.explainAuth(decision, facts, proof);
+    return { decision, explanation, proof };
+  }
+  if (flow === 'dispute') {
+    const r = DEMO_VERIFIERS.verifyDispute(facts);
+    return { decision: r.decision, explanation: r.explanation, proof: r };
+  }
+  if (flow === 'cli') {
+    const r = DEMO_VERIFIERS.verifyCLI(facts);
+    return { decision: r.decision, explanation: r.explanation, proof: r };
+  }
+  return { decision: 'decline', explanation: 'Unknown flow', proof: { satisfiable: false, checked_invariants: [], unsat_core: [] } };
+}
+
+function setDecision(dec) {
+  decisionBox.textContent = dec;
+  decisionBox.classList.remove('ok', 'bad', 'warn');
+  if (dec.includes('approve')) decisionBox.classList.add('ok');
+  else decisionBox.classList.add('bad');
+}
+
+// Init
+setExamples(flowEl.value);
+document.getElementById('loadExample').addEventListener('click', () => {
+  const ex = getExample(flowEl.value, exEl.value) || (DEMO_EXAMPLES[flowEl.value] || [])[0];
+  inputEl.value = ex ? ex.text : '';
+});
+document.getElementById('runLLM').addEventListener('click', () => {
+  const facts = extractFacts(flowEl.value, inputEl.value);
+  factsOut.textContent = pretty(facts);
+});
+document.getElementById('runVerifier').addEventListener('click', () => {
+  let facts;
+  try { facts = JSON.parse(factsOut.textContent || '{}'); } catch { facts = extractFacts(flowEl.value, inputEl.value); }
+  const res = runVerifier(flowEl.value, facts);
+  setDecision(res.decision);
+  explanationBox.textContent = res.explanation;
+  invariantsOut.textContent = pretty(res.proof.checked_invariants || []);
+  unsatOut.textContent = pretty(res.proof.unsat_core || []);
+});
+flowEl.addEventListener('change', () => {
+  setExamples(flowEl.value);
+  const exs = DEMO_EXAMPLES[flowEl.value] || [];
+  if (exs[0]) inputEl.value = exs[0].text; else inputEl.value = '';
+  factsOut.textContent = '';
+  setDecision('—');
+  explanationBox.textContent = '';
+  invariantsOut.textContent = '';
+  unsatOut.textContent = '';
+});
+// Load first example on start
+document.getElementById('loadExample').click();
+

@@ -1,0 +1,27 @@
+id: auth_v1
+entities:
+  Reals: [amount, avail, limit, risk]
+  Ints: [vel1h, mcc]
+  Bools: [cnp]
+constants:
+  forbidden_mcc: [4829, 7995]
+invariants:
+  - name: limit_ok
+    assert: "amount <= limit"
+  - name: risk_ceiling
+    assert: "risk <= 0.80"
+  - name: cnp_tightened
+    assert: "Implies(cnp, risk <= 0.55)"
+  - name: velocity_cap
+    assert: "vel1h <= 5"
+  - name: mcc_allowed
+    assert: "And([mcc != x for x in forbidden_mcc])"
+actions:
+  - name: approve_no_otp
+    guard: "And(amount <= avail, risk <= 0.35)"
+  - name: approve_with_otp
+    guard: "And(amount <= limit, risk <= 0.55)"
+  - name: decline
+    guard: "Or(risk > 0.55, amount > limit, vel1h > 5)"
+one_hot_actions: true
+

@@ -1,0 +1,20 @@
+id: disputes_v1
+entities:
+  Bools: [delivery_proof, refund_attempted]
+  Ints: [days_since_txn]
+invariants:
+  - name: refund_window
+    assert: "days_since_txn <= 120"
+  - name: no_refund_no_rc10
+    assert: "Implies(Not(refund_attempted), Not(rc_10_4))"
+actions:
+  - name: rc_13_1
+    guard: "delivery_proof"
+  - name: rc_10_4
+    guard: "refund_attempted"
+  - name: request_more_docs
+    guard: "True"
+  - name: reject_dispute
+    guard: "days_since_txn > 120"
+one_hot_actions: false
+
