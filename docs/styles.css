@@ -21,7 +21,10 @@ header, footer { max-width: 1000px; margin: 24px auto; padding: 0 16px; }
 header h1 { margin: 0 0 4px; font-size: 24px; }
 header p { margin: 0; color: var(--muted); }
 
-main { max-width: 1000px; margin: 0 auto 48px; padding: 0 16px; }
+main { max-width: 1200px; margin: 0 auto 48px; padding: 0 16px; }
+.layout { display: grid; grid-template-columns: 280px 1fr; gap: 16px; align-items: start; }
+.sidebar { position: sticky; top: 16px; height: fit-content; }
+.content { display: grid; gap: 16px; }
 .panel {
   background: var(--panel);
   border: 1px solid #1b2533;
@@ -46,6 +49,25 @@ button { padding: 8px 12px; cursor: pointer; }
 .actions { margin-top: 10px; }
 button:hover { border-color: var(--accent); }
 button:active { transform: translateY(1px); }
+.block { display: block; width: 100%; }
+.examples { display: grid; gap: 8px; }
+.examples button { width: 100%; text-align: left; padding: 10px 12px; border-radius: 8px; }
+.examples button .label { display: block; font-weight: 600; }
+.examples button .desc { display: block; color: var(--muted); font-size: 12px; }
+.small { font-size: 12px; }
+.muted { color: var(--muted); }
+.spacer { flex: 1; }
+
+.steps { display: grid; gap: 10px; }
+.step { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border: 1px solid #1b2533; border-radius: 8px; background: #0e141d; }
+.step-head { display: flex; align-items: center; gap: 8px; }
+.step .dot { width: 10px; height: 10px; border-radius: 50%; background: #3c4657; display: inline-block; }
+.step .status { font-variant: all-small-caps; letter-spacing: .5px; color: var(--muted); }
+.step .duration { color: var(--muted); margin-left: 8px; }
+.step.running .dot { background: var(--accent); box-shadow: 0 0 0 3px rgba(88,166,255,.15); animation: pulse 1.2s infinite; }
+.step.done .dot { background: var(--ok); }
+.step.error .dot { background: var(--bad); }
+@keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.25);} 100% { transform: scale(1);} }
 
 .code {
   background: var(--code);
@@ -68,4 +90,3 @@ details > summary { cursor: pointer; color: var(--muted); }
 details[open] summary { color: var(--text); }
 
 footer { color: var(--muted); font-size: 13px; }
-

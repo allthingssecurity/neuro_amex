@@ -1,24 +1,34 @@
 /* global DEMO_EXAMPLES, DEMO_VERIFIERS */
 
 const flowEl = document.getElementById('flow');
-const exEl = document.getElementById('example');
 const inputEl = document.getElementById('inputText');
 const factsOut = document.getElementById('factsOut');
 const decisionBox = document.getElementById('decisionBox');
 const explanationBox = document.getElementById('explanationBox');
 const invariantsOut = document.getElementById('invariantsOut');
 const unsatOut = document.getElementById('unsatOut');
+const autoRunToggle = document.getElementById('autoRunToggle');
+
+const stepLLM = document.getElementById('step-llm');
+const stepVerify = document.getElementById('step-verify');
+const stepExplain = document.getElementById('step-explain');
+const tLLM = document.getElementById('t-llm');
+const tVerify = document.getElementById('t-verify');
+const tExplain = document.getElementById('t-explain');
 
 function setExamples(flow) {
-  exEl.innerHTML = '';
+  const list = document.getElementById('examplesList');
+  list.innerHTML = '';
   (DEMO_EXAMPLES[flow] || []).forEach(ex => {
-    const opt = document.createElement('option');
-    opt.value = ex.id; opt.textContent = ex.label; exEl.appendChild(opt);
+    const btn = document.createElement('button');
+    btn.className = 'example-btn';
+    btn.innerHTML = `<span class="label">${ex.label}</span>`;
+    btn.addEventListener('click', () => {
+      inputEl.value = ex.text;
+      if (autoRunToggle.checked) runPipeline();
+    });
+    list.appendChild(btn);
   });
-}
-
-function getExample(flow, id) {
-  return (DEMO_EXAMPLES[flow] || []).find(x => x.id === id) || null;
 }
 
 function pretty(obj) {
@@ -120,35 +130,79 @@ function setDecision(dec) {
   else decisionBox.classList.add('bad');
 }
 
-// Init
-setExamples(flowEl.value);
-document.getElementById('loadExample').addEventListener('click', () => {
-  const ex = getExample(flowEl.value, exEl.value) || (DEMO_EXAMPLES[flowEl.value] || [])[0];
-  inputEl.value = ex ? ex.text : '';
-});
-document.getElementById('runLLM').addEventListener('click', () => {
-  const facts = extractFacts(flowEl.value, inputEl.value);
-  factsOut.textContent = pretty(facts);
-});
-document.getElementById('runVerifier').addEventListener('click', () => {
-  let facts;
-  try { facts = JSON.parse(factsOut.textContent || '{}'); } catch { facts = extractFacts(flowEl.value, inputEl.value); }
-  const res = runVerifier(flowEl.value, facts);
-  setDecision(res.decision);
-  explanationBox.textContent = res.explanation;
-  invariantsOut.textContent = pretty(res.proof.checked_invariants || []);
-  unsatOut.textContent = pretty(res.proof.unsat_core || []);
-});
-flowEl.addEventListener('change', () => {
-  setExamples(flowEl.value);
-  const exs = DEMO_EXAMPLES[flowEl.value] || [];
-  if (exs[0]) inputEl.value = exs[0].text; else inputEl.value = '';
+function clearResults() {
   factsOut.textContent = '';
   setDecision('—');
   explanationBox.textContent = '';
   invariantsOut.textContent = '';
   unsatOut.textContent = '';
-});
-// Load first example on start
-document.getElementById('loadExample').click();
+}
 
+function setStep(el, state, durText) {
+  el.classList.remove('running', 'done', 'error');
+  el.querySelector('.status').textContent = state;
+  if (durText) el.querySelector('.duration').textContent = ` ${durText}`;
+  if (state === 'running') el.classList.add('running');
+  if (state === 'done') el.classList.add('done');
+  if (state === 'error') el.classList.add('error');
+}
+
+async function runPipeline() {
+  clearResults();
+  const flow = flowEl.value;
+  const text = inputEl.value.trim();
+
+  // Step 1: LLM
+  setStep(stepLLM, 'running');
+  const t0 = performance.now();
+  await delay(rand(200, 600));
+  let facts;
+  try {
+    facts = extractFacts(flow, text);
+    factsOut.textContent = pretty(facts);
+    setStep(stepLLM, 'done', fmtMs(performance.now() - t0));
+  } catch (e) {
+    setStep(stepLLM, 'error', fmtMs(performance.now() - t0));
+    return;
+  }
+
+  // Step 2: Verifier
+  setStep(stepVerify, 'running');
+  const t1 = performance.now();
+  await delay(rand(150, 400));
+  const res = runVerifier(flow, facts);
+  setDecision(res.decision);
+  explanationBox.textContent = res.explanation;
+  invariantsOut.textContent = pretty(res.proof.checked_invariants || []);
+  unsatOut.textContent = pretty(res.proof.unsat_core || []);
+  setStep(stepVerify, 'done', fmtMs(performance.now() - t1));
+
+  // Step 3: Explanation (already rendered)
+  setStep(stepExplain, 'running');
+  const t2 = performance.now();
+  await delay(rand(80, 180));
+  setStep(stepExplain, 'done', fmtMs(performance.now() - t2));
+}
+
+function delay(ms){ return new Promise(r => setTimeout(r, ms)); }
+function rand(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+function fmtMs(ms){ return `${Math.round(ms)}ms`; }
+
+// Init
+setExamples(flowEl.value);
+flowEl.addEventListener('change', () => {
+  setExamples(flowEl.value);
+  clearResults();
+});
+document.getElementById('runPipeline').addEventListener('click', runPipeline);
+document.getElementById('reset').addEventListener('click', () => {
+  inputEl.value = '';
+  clearResults();
+  [stepLLM, stepVerify, stepExplain].forEach(s => setStep(s, 'idle', ''));
+});
+document.addEventListener('keydown', (e) => {
+  if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') runPipeline();
+});
+// Load first example and auto-run
+const first = (DEMO_EXAMPLES[flowEl.value]||[])[0];
+if (first) { inputEl.value = first.text; runPipeline(); }

@@ -9,68 +9,83 @@
   <body>
     <header>
       <h1>Neuro-Symbolic Chatbots for Financial Services</h1>
-      <p>Encoding Amex policies as constraints, with LLM fact extraction.</p>
+      <p>Type a prompt, watch LLM extract facts, then the verifier decides.</p>
     </header>
 
-    <main>
-      <section class="panel">
-        <h2>1) Choose Use Case & Example</h2>
-        <div class="row">
-          <label for="flow">Use Case</label>
-          <select id="flow">
-            <option value="auth">Transaction Authorization</option>
-            <option value="dispute">Dispute Filing</option>
-            <option value="cli">Credit Line Increase</option>
-          </select>
-        </div>
-        <div class="row">
-          <label for="example">Example</label>
-          <select id="example"></select>
-        </div>
-        <textarea id="inputText" rows="8" spellcheck="false"></textarea>
-        <div class="actions">
-          <button id="loadExample">Load Example</button>
-        </div>
-      </section>
+    <main class="layout">
+      <aside class="sidebar panel">
+        <h2>Use Case</h2>
+        <select id="flow" class="block">
+          <option value="auth">Transaction Authorization</option>
+          <option value="dispute">Dispute Filing</option>
+          <option value="cli">Credit Line Increase</option>
+        </select>
+        <h2>Examples</h2>
+        <div id="examplesList" class="examples"></div>
+        <div class="muted small">Clicking an example loads and runs it.</div>
+      </aside>
 
-      <section class="panel">
-        <h2>2) LLM Extraction (Mock)</h2>
-        <p class="hint">This simulates an LLM converting chat text into structured facts.</p>
-        <div class="actions">
-          <button id="runLLM">Run LLM Extraction</button>
-        </div>
-        <pre id="factsOut" class="code"></pre>
-      </section>
+      <section class="content">
+        <section class="panel">
+          <h2>Prompt</h2>
+          <textarea id="inputText" rows="8" spellcheck="false" placeholder="Describe your situation... (Cmd/Ctrl+Enter to run)"></textarea>
+          <div class="actions">
+            <label><input type="checkbox" id="autoRunToggle" checked /> Auto-run on example select</label>
+            <div class="spacer"></div>
+            <button id="runPipeline">Run End-to-End</button>
+            <button id="reset">Reset</button>
+          </div>
+        </section>
 
-      <section class="panel">
-        <h2>3) Policy Verification (Constraint Solver)</h2>
-        <p class="hint">This step mirrors Z3 rules in JavaScript for a fully static demo.</p>
-        <div class="actions">
-          <button id="runVerifier">Run Verifier</button>
-        </div>
-        <div id="verifierResults" class="grid">
-          <div>
-            <h3>Decision</h3>
-            <div id="decisionBox" class="badge">—</div>
-          </div>
-          <div>
-            <h3>Explanation</h3>
-            <div id="explanationBox" class="text"></div>
-          </div>
-        </div>
-        <details>
-          <summary>Proof Details</summary>
-          <div class="grid">
-            <div>
-              <h4>Checked Invariants</h4>
-              <pre id="invariantsOut" class="code"></pre>
+        <section class="panel">
+          <h2>Pipeline Status</h2>
+          <div class="steps">
+            <div class="step" id="step-llm">
+              <div class="step-head"><span class="dot"></span> LLM Extraction</div>
+              <div class="step-meta"><span class="status">idle</span><span class="duration" id="t-llm"></span></div>
             </div>
-            <div>
-              <h4>Unsat Core</h4>
-              <pre id="unsatOut" class="code"></pre>
+            <div class="step" id="step-verify">
+              <div class="step-head"><span class="dot"></span> Verifier</div>
+              <div class="step-meta"><span class="status">idle</span><span class="duration" id="t-verify"></span></div>
+            </div>
+            <div class="step" id="step-explain">
+              <div class="step-head"><span class="dot"></span> Explanation</div>
+              <div class="step-meta"><span class="status">idle</span><span class="duration" id="t-explain"></span></div>
             </div>
           </div>
-        </details>
+        </section>
+
+        <section class="panel">
+          <h2>Extracted Facts</h2>
+          <pre id="factsOut" class="code"></pre>
+        </section>
+
+        <section class="panel">
+          <h2>Decision & Proof</h2>
+          <div id="verifierResults" class="grid">
+            <div>
+              <h3>Decision</h3>
+              <div id="decisionBox" class="badge">—</div>
+            </div>
+            <div>
+              <h3>Explanation</h3>
+              <div id="explanationBox" class="text"></div>
+            </div>
+          </div>
+          <details>
+            <summary>Proof Details</summary>
+            <div class="grid">
+              <div>
+                <h4>Checked Invariants</h4>
+                <pre id="invariantsOut" class="code"></pre>
+              </div>
+              <div>
+                <h4>Unsat Core</h4>
+                <pre id="unsatOut" class="code"></pre>
+              </div>
+            </div>
+          </details>
+        </section>
       </section>
     </main>
 
@@ -85,4 +100,3 @@
     <script src="app.js"></script>
   </body>
   </html>
-
