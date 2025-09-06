@@ -8,6 +8,7 @@ const explanationBox = document.getElementById('explanationBox');
 const invariantsOut = document.getElementById('invariantsOut');
 const unsatOut = document.getElementById('unsatOut');
 const autoRunToggle = document.getElementById('autoRunToggle');
+const programOut = document.getElementById('programOut');
 
 const stepLLM = document.getElementById('step-llm');
 const stepVerify = document.getElementById('step-verify');
@@ -19,7 +20,9 @@ const tExplain = document.getElementById('t-explain');
 function setExamples(flow) {
   const list = document.getElementById('examplesList');
   list.innerHTML = '';
-  (DEMO_EXAMPLES[flow] || []).forEach(ex => {
+  const examples = DEMO_EXAMPLES[flow] || [];
+  const listToUse = examples.length ? examples : [{ label: 'Sample prompt', text: 'Online $120, card not present. Risk 0.4, limit 1000, available 600. MCC 5999. 2 purchases last hour.' }];
+  listToUse.forEach(ex => {
     const btn = document.createElement('button');
     btn.className = 'example-btn';
     btn.innerHTML = `<span class="label">${ex.label}</span>`;
@@ -132,6 +135,7 @@ function setDecision(dec) {
 
 function clearResults() {
   factsOut.textContent = '';
+  programOut.textContent = '';
   setDecision('—');
   explanationBox.textContent = '';
   invariantsOut.textContent = '';
@@ -167,6 +171,13 @@ async function runPipeline() {
   }
 
   // Step 2: Verifier
+  // Show compiled program before running
+  try {
+    if (flow === 'auth') programOut.textContent = window.DEMO_PROGRAMS.buildAuthProgram(facts);
+    else if (flow === 'dispute') programOut.textContent = window.DEMO_PROGRAMS.buildDisputeProgram(facts);
+    else if (flow === 'cli') programOut.textContent = window.DEMO_PROGRAMS.buildCLIProgram(facts);
+  } catch (e) { programOut.textContent = ''; }
+
   setStep(stepVerify, 'running');
   const t1 = performance.now();
   await delay(rand(150, 400));
