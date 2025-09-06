@@ -10,6 +10,7 @@
     <header>
       <h1>Neuro-Symbolic Chatbots for Financial Services</h1>
       <p>Type a prompt, watch LLM extract facts, then the verifier decides.</p>
+      <div id="progress" class="progress"><div class="bar" id="progressBar"></div></div>
     </header>
 
     <main class="layout">
@@ -32,6 +33,13 @@
           <div class="actions">
             <label><input type="checkbox" id="autoRunToggle" checked /> Auto-run on example select</label>
             <div class="spacer"></div>
+            <label class="muted small" for="speed">Speed</label>
+            <select id="speed" class="small">
+              <option value="fast">Fast</option>
+              <option value="normal">Normal</option>
+              <option value="slow" selected>Slow</option>
+              <option value="vslow">Very Slow</option>
+            </select>
             <button id="runPipeline">Run End-to-End</button>
             <button id="reset">Reset</button>
           </div>

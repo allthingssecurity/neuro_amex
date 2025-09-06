@@ -9,6 +9,8 @@ const invariantsOut = document.getElementById('invariantsOut');
 const unsatOut = document.getElementById('unsatOut');
 const autoRunToggle = document.getElementById('autoRunToggle');
 const programOut = document.getElementById('programOut');
+const speedSel = document.getElementById('speed');
+const progressBar = document.getElementById('progressBar');
 
 const stepLLM = document.getElementById('step-llm');
 const stepVerify = document.getElementById('step-verify');
@@ -151,15 +153,41 @@ function setStep(el, state, durText) {
   if (state === 'error') el.classList.add('error');
 }
 
+function speedFactor() {
+  switch (speedSel.value) {
+    case 'fast': return 0.6;
+    case 'normal': return 1.0;
+    case 'slow': return 1.8;
+    case 'vslow': return 2.6;
+    default: return 1.0;
+  }
+}
+
+function setProgress(pct) {
+  progressBar.style.width = `${Math.max(0, Math.min(100, pct))}%`;
+}
+
+async function animateProgressTo(targetPct, durationMs) {
+  progressBar.style.transition = `width ${durationMs}ms linear`;
+  requestAnimationFrame(() => setProgress(targetPct));
+  await delay(durationMs);
+}
+
 async function runPipeline() {
   clearResults();
   const flow = flowEl.value;
   const text = inputEl.value.trim();
+  // Reset progress
+  progressBar.style.transition = 'none';
+  setProgress(0);
 
   // Step 1: LLM
   setStep(stepLLM, 'running');
   const t0 = performance.now();
-  await delay(rand(200, 600));
+  const f = speedFactor();
+  const llmDur = Math.round(rand(1200, 2000) * f);
+  animateProgressTo(35, llmDur);
+  await delay(llmDur);
   let facts;
   try {
     facts = extractFacts(flow, text);
@@ -180,7 +208,9 @@ async function runPipeline() {
 
   setStep(stepVerify, 'running');
   const t1 = performance.now();
-  await delay(rand(150, 400));
+  const verDur = Math.round(rand(800, 1500) * f);
+  animateProgressTo(85, verDur);
+  await delay(verDur);
   const res = runVerifier(flow, facts);
   setDecision(res.decision);
   explanationBox.textContent = res.explanation;
@@ -191,7 +221,8 @@ async function runPipeline() {
   // Step 3: Explanation (already rendered)
   setStep(stepExplain, 'running');
   const t2 = performance.now();
-  await delay(rand(80, 180));
+  const expDur = Math.round(rand(500, 900) * f);
+  await animateProgressTo(100, expDur);
   setStep(stepExplain, 'done', fmtMs(performance.now() - t2));
 }
 
