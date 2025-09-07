@@ -18,6 +18,7 @@ const stepExplain = document.getElementById('step-explain');
 const tLLM = document.getElementById('t-llm');
 const tVerify = document.getElementById('t-verify');
 const tExplain = document.getElementById('t-explain');
+let ch15Chart = null;
 
 function setExamples(flow) {
   const list = document.getElementById('examplesList');
@@ -224,6 +225,9 @@ async function runPipeline() {
   const expDur = Math.round(rand(500, 900) * f);
   await animateProgressTo(100, expDur);
   setStep(stepExplain, 'done', fmtMs(performance.now() - t2));
+
+  // Update Chapter 15 chart with this run's durations
+  try { updateCh15Chart({ llm: llmDur, verify: verDur, explain: expDur }); } catch {}
 }
 
 function delay(ms){ return new Promise(r => setTimeout(r, ms)); }
@@ -248,3 +252,61 @@ document.addEventListener('keydown', (e) => {
 // Load first example and auto-run
 const first = (DEMO_EXAMPLES[flowEl.value]||[])[0];
 if (first) { inputEl.value = first.text; runPipeline(); }
+
+// Chapter 15: setup video and chart
+(function initCh15() {
+  // Video source: query param ch15_video or default assets/ch15.mp4
+  const url = new URL(window.location.href);
+  const custom = url.searchParams.get('ch15_video');
+  const videoEl = document.getElementById('ch15Video');
+  const src = custom || 'assets/ch15.mp4';
+  if (videoEl) {
+    videoEl.src = src;
+    videoEl.onerror = () => {
+      const msg = document.createElement('div');
+      msg.className = 'muted small';
+      msg.style.margin = '8px 0 0 0';
+      msg.textContent = 'Video not found. Provide ?ch15_video=<url> or place docs/assets/ch15.mp4';
+      videoEl.parentElement.appendChild(msg);
+      videoEl.parentElement.removeChild(videoEl);
+    };
+  }
+
+  // Chart.js stacked bar for durations (LLM, Verifier, Explanation)
+  const ctx = document.getElementById('ch15Chart');
+  if (!ctx || !window.Chart) return;
+  ch15Chart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ['Run 1'],
+      datasets: [
+        { label: 'LLM', data: [0], backgroundColor: 'rgba(88,166,255,0.6)' },
+        { label: 'Verifier', data: [0], backgroundColor: 'rgba(50,210,150,0.6)' },
+        { label: 'Explanation', data: [0], backgroundColor: 'rgba(243,156,18,0.6)' },
+      ],
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { labels: { color: '#dbe3ee' } },
+        tooltip: { callbacks: { label: (ctx) => `${ctx.dataset.label}: ${Math.round(ctx.parsed.y)} ms` } },
+      },
+      scales: {
+        x: { stacked: true, ticks: { color: '#9fb0c8' }, grid: { color: '#1b2533' } },
+        y: { stacked: true, ticks: { color: '#9fb0c8' }, grid: { color: '#1b2533' } },
+      },
+    },
+  });
+})();
+
+function updateCh15Chart(durs) {
+  if (!ch15Chart) return;
+  const label = `Run ${ch15Chart.data.labels.length}`;
+  ch15Chart.data.labels.push(label);
+  // ensure datasets exist
+  const [d0, d1, d2] = ch15Chart.data.datasets;
+  d0.data.push(durs.llm);
+  d1.data.push(durs.verify);
+  d2.data.push(durs.explain);
+  ch15Chart.update('none');
+}

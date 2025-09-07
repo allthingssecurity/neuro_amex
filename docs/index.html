@@ -109,8 +109,21 @@
       </p>
     </footer>
 
+    <!-- Chapter 15: Video + Graph (Chart.js) -->
+    <section class="panel" style="max-width:1200px;margin:24px auto;">
+      <h2>Chapter 15 — Video & Graph</h2>
+      <p class="hint">Video sits above the graph. Supply a video via query param <code>?ch15_video=...</code> or place it at <code>docs/assets/ch15.mp4</code>.</p>
+      <div class="videoWrap">
+        <video id="ch15Video" class="video" controls preload="metadata"></video>
+      </div>
+      <div class="graphWrap">
+        <canvas id="ch15Chart" height="140"></canvas>
+      </div>
+    </section>
+
     <script src="examples.js"></script>
     <script src="verifiers.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script src="app.js"></script>
   </body>
   </html>

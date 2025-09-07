@@ -92,3 +92,7 @@ details > summary { cursor: pointer; color: var(--muted); }
 details[open] summary { color: var(--text); }
 
 footer { color: var(--muted); font-size: 13px; }
+
+.videoWrap { margin-top: 8px; border-radius: 10px; overflow: hidden; border: 1px solid #1b2533; background: #0e141d; }
+.video { width: 100%; display: block; background: black; }
+.graphWrap { margin-top: 16px; padding: 8px; background: #0e141d; border: 1px solid #1b2533; border-radius: 10px; }
